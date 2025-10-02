@@ -5,37 +5,85 @@ trigger:
       - dev
 
 variables:
-  imageRepository: 'afi/demand-planning/wholesale-suite-frontend'
-  containerRegistry: 'ashleyfurniture.azurecr.io'
-  dockerfilePath: 'Dockerfile'
-  tag: '$(Build.BuildId)'
+  imageRepository: "afi/demand-planning/wholesale-suite-frontend"
+  containerRegistry: "ashleyfurniture.azurecr.io"
+  dockerfilePath: "Dockerfile"
+  tag: "$(Build.BuildId)"
 
 stages:
-- stage: Build
-  displayName: 'Build and Push Docker Image'
-  jobs:
-  - job: Build
-    displayName: 'Build'
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - task: NodeTool@0
-      displayName: 'Install Node.js'
-      inputs:
-        versionSpec: '22.x'
+  - stage: Build
+    displayName: "Build and Push Docker Image"
+    jobs:
+      - job: Build
+        displayName: "Build"
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - task: NodeTool@0
+            displayName: "Install Node.js"
+            inputs:
+              versionSpec: "22.x"
 
-    - script: |
-        npm install
-        npm run build
-      displayName: 'Install dependencies and build'
+          - script: |
+              npm install
+              npm run build
+            displayName: "Install dependencies and build"
 
-    - task: Docker@2
-      displayName: 'Build and push Docker image'
-      inputs:
-        containerRegistry: 'ashleyfurniture'
-        repository: '$(imageRepository)'
-        command: 'buildAndPush'
-        Dockerfile: '$(dockerfilePath)'
-        tags: |
-          $(tag)
-          latest
+          - task: Docker@2
+            displayName: "Build and push Docker image"
+            inputs:
+              containerRegistry: "ashleyfurniture"
+              repository: "$(imageRepository)"
+              command: "buildAndPush"
+              Dockerfile: "$(dockerfilePath)"
+              tags: |
+                $(tag)
+                latest
+
+          - task: CopyFiles@2
+            displayName: "Copy K8s files to artifact"
+            inputs:
+              SourceFolder: "$(Build.SourcesDirectory)/k8s"
+              Contents: "**"
+              TargetFolder: "$(Build.ArtifactStagingDirectory)"
+
+          - task: PublishBuildArtifacts@1
+            displayName: "Publish deployment artifact"
+            inputs:
+              PathtoPublish: "$(Build.ArtifactStagingDirectory)"
+              ArtifactName: "k8s-manifests"
+              publishLocation: "Container"
+
+  - stage: Deploy_Dev
+    displayName: "Deploy to Development"
+    dependsOn: Build
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['Build.SourceBranch'], 'refs/heads/main')))
+    jobs:
+      - deployment: DeployToDev
+        displayName: "Deploy to Dev Kubernetes"
+        environment: "afi-dev-kube.demand-planning"
+        pool:
+          vmImage: "ubuntu-latest"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadBuildArtifacts@0
+                  displayName: "Download K8s manifests"
+                  inputs:
+                    buildType: "current"
+                    downloadType: "single"
+                    artifactName: "k8s-manifests"
+                    downloadPath: "$(Pipeline.Workspace)"
+
+                - task: KubernetesManifest@1
+                  displayName: "Deploy to Kubernetes"
+                  inputs:
+                    action: "deploy"
+                    kubernetesServiceConnection: "dev-kube"
+                    namespace: "demand-planning"
+                    manifests: |
+                      $(Pipeline.Workspace)/k8s-manifests/deployment.yaml
+                      $(Pipeline.Workspace)/k8s-manifests/service.yaml
+                    containers: |
+                      $(containerRegistry)/$(imageRepository):$(tag)
