@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: ashleyfurniture.azurecr.io/demand-supply-frontend:latest
+        image: ashleyfurniture.azurecr.io/afi/demand-planning/wholesale-suite-frontend:latest
         ports:
         - containerPort: 3000
         resources:
