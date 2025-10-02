@@ -1,96 +1,181 @@
+import {
+  ApiOutlined,
+  AppstoreOutlined,
+  CloudServerOutlined,
+  CodeOutlined,
+  DatabaseOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
 import { Helmet } from '@modern-js/runtime/head';
-import './index.css';
+import { Card, Col, Divider, Row, Space, Tag, Typography } from 'antd';
 
-const Index = () => (
-  <div className="container-box">
-    <Helmet>
-      <link
-        rel="icon"
-        type="image/x-icon"
-        href="https://lf3-static.bytednsdoc.com/obj/eden-cn/uhbfnupenuhf/favicon.ico"
-      />
-    </Helmet>
-    <main>
-      <div className="title">
-        Welcome to
-        <img
-          className="logo"
-          src="https://lf3-static.bytednsdoc.com/obj/eden-cn/zq-uylkvT/ljhwZthlaukjlkulzlp/modern-js-logo.svg"
-          alt="Modern.js Logo"
-        />
-        <p className="name">Modern.js</p>
-      </div>
-      <p className="description">
-        Get started by editing <code className="code">src/routes/page.tsx</code>
-      </p>
-      <div className="grid">
-        <a
-          href="https://modernjs.dev/guides/get-started/introduction.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="card"
-        >
-          <h2>
-            Guide
-            <img
-              className="arrow-right"
-              src="https://lf3-static.bytednsdoc.com/obj/eden-cn/zq-uylkvT/ljhwZthlaukjlkulzlp/arrow-right.svg"
-              alt="Guide"
-            />
-          </h2>
-          <p>Follow the guides to use all features of Modern.js.</p>
-        </a>
-        <a
-          href="https://modernjs.dev/tutorials/foundations/introduction.html"
-          target="_blank"
-          className="card"
-          rel="noreferrer"
-        >
-          <h2>
-            Tutorials
-            <img
-              className="arrow-right"
-              src="https://lf3-static.bytednsdoc.com/obj/eden-cn/zq-uylkvT/ljhwZthlaukjlkulzlp/arrow-right.svg"
-              alt="Tutorials"
-            />
-          </h2>
-          <p>Learn to use Modern.js to create your first application.</p>
-        </a>
-        <a
-          href="https://modernjs.dev/configure/app/usage.html"
-          target="_blank"
-          className="card"
-          rel="noreferrer"
-        >
-          <h2>
-            Config
-            <img
-              className="arrow-right"
-              src="https://lf3-static.bytednsdoc.com/obj/eden-cn/zq-uylkvT/ljhwZthlaukjlkulzlp/arrow-right.svg"
-              alt="Config"
-            />
-          </h2>
-          <p>Find all configuration options provided by Modern.js.</p>
-        </a>
-        <a
-          href="https://github.com/web-infra-dev/modern.js"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="card"
-        >
-          <h2>
-            GitHub
-            <img
-              className="arrow-right"
-              src="https://lf3-static.bytednsdoc.com/obj/eden-cn/zq-uylkvT/ljhwZthlaukjlkulzlp/arrow-right.svg"
-              alt="Github"
-            />
-          </h2>
-          <p>View the source code on GitHub; feel free to contribute.</p>
-        </a>
-      </div>
-    </main>
-  </div>
-);
+const { Title, Paragraph, Text } = Typography;
 
-export default Index;
+export default function HomePage() {
+  return (
+    <>
+      <Helmet>
+        <title>Demand & Supply Wholesale</title>
+      </Helmet>
+
+      <div style={{ padding: '40px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <Title level={1}>Demand & Supply Wholesale</Title>
+          <Paragraph style={{ fontSize: '18px', color: '#666' }}>
+            Modern React application built with enterprise-grade technologies
+          </Paragraph>
+        </div>
+
+        <Row gutter={[24, 24]}>
+          <Col xs={24} md={12}>
+            <Card
+              title={
+                <Space>
+                  <AppstoreOutlined style={{ color: '#61dafb' }} />
+                  Frontend Stack
+                </Space>
+              }
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div>
+                  <Text strong>Modern.js Framework</Text>
+                  <br />
+                  <Text type="secondary">
+                    Enterprise React framework with SSR support
+                  </Text>
+                </div>
+                <div>
+                  <Text strong>React 18 + TypeScript</Text>
+                  <br />
+                  <Text type="secondary">Type-safe component development</Text>
+                </div>
+                <div>
+                  <Text strong>Ant Design</Text>
+                  <br />
+                  <Text type="secondary">
+                    Professional UI component library
+                  </Text>
+                </div>
+              </Space>
+            </Card>
+          </Col>
+
+          <Col xs={24} md={12}>
+            <Card
+              title={
+                <Space>
+                  <ApiOutlined style={{ color: '#52c41a' }} />
+                  Backend Integration
+                </Space>
+              }
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div>
+                  <Text strong>.NET Web API</Text>
+                  <br />
+                  <Text type="secondary">RESTful API services in C#</Text>
+                </div>
+                <div>
+                  <Text strong>Entity Framework</Text>
+                  <br />
+                  <Text type="secondary">Database ORM and data access</Text>
+                </div>
+                <div>
+                  <Text strong>SQL Server</Text>
+                  <br />
+                  <Text type="secondary">Enterprise database solution</Text>
+                </div>
+              </Space>
+            </Card>
+          </Col>
+
+          <Col xs={24} md={12}>
+            <Card
+              title={
+                <Space>
+                  <CodeOutlined style={{ color: '#722ed1' }} />
+                  Development Tools
+                </Space>
+              }
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div>
+                  <Text strong>Visual Studio Code</Text>
+                  <br />
+                  <Text type="secondary">
+                    Modern code editor with extensions
+                  </Text>
+                </div>
+                <div>
+                  <Text strong>npm Package Manager</Text>
+                  <br />
+                  <Text type="secondary">Dependency management</Text>
+                </div>
+                <div>
+                  <Text strong>ESLint + Prettier</Text>
+                  <br />
+                  <Text type="secondary">Code quality and formatting</Text>
+                </div>
+              </Space>
+            </Card>
+          </Col>
+
+          <Col xs={24} md={12}>
+            <Card
+              title={
+                <Space>
+                  <SettingOutlined style={{ color: '#fa8c16' }} />
+                  Enterprise Features
+                </Space>
+              }
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div>
+                  <Text strong>Server-Side Rendering</Text>
+                  <br />
+                  <Text type="secondary">Improved performance and SEO</Text>
+                </div>
+                <div>
+                  <Text strong>TypeScript Integration</Text>
+                  <br />
+                  <Text type="secondary">End-to-end type safety</Text>
+                </div>
+                <div>
+                  <Text strong>Micro-Frontend Ready</Text>
+                  <br />
+                  <Text type="secondary">Scalable architecture for teams</Text>
+                </div>
+              </Space>
+            </Card>
+          </Col>
+        </Row>
+
+        <Divider />
+
+        <Card style={{ marginTop: '24px', backgroundColor: '#fafafa' }}>
+          <Title level={3}>Application Features</Title>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={8}>
+              <Text strong>• Item-Customer Group Management</Text>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Text strong>• Real-time Activity Tracking</Text>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Text strong>• Advanced Search & Filtering</Text>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Text strong>• Professional UI Components</Text>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Text strong>• Responsive Design</Text>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Text strong>• Enterprise Security</Text>
+            </Col>
+          </Row>
+        </Card>
+      </div>
+    </>
+  );
+}

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demand-supply-frontend
+  namespace: demand-planning
+  labels:
+    app: demand-supply-frontend
+    environment: development
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demand-supply-frontend
+  template:
+    metadata:
+      labels:
+        app: demand-supply-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: ashleyfurniture.azurecr.io/demand-supply-frontend:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        env:
+        - name: NODE_ENV
+          value: "development"
+        - name: API_BASE_URL
+          value: "http://demand-supply-api:8080/api"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5

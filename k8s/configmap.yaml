@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demand-supply-frontend-config
+  namespace: demand-planning
+data:
+  NODE_ENV: "development"
+  API_BASE_URL: "http://demand-supply-api:8080/api"
+  APP_NAME: "Demand & Supply Wholesale"
