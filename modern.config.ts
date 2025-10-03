@@ -1,6 +1,5 @@
 import { appTools, defineConfig } from '@modern-js/app-tools';
 
-// https://modernjs.dev/en/configure/app/usage
 export default defineConfig({
   server: {
     port: 3000,
@@ -8,15 +7,18 @@ export default defineConfig({
   runtime: {
     router: true,
   },
-  source: {
-    // This creates a global variable 'process.env.NODE_ENV' in your client-side code
-    globalVars: {
-      'process.env.NODE_ENV': 'development',
-    },
+  output: {
+    // This tells Modern.js to copy our config folder to the build output
+    copy: [
+      {
+        from: './config',
+        to: './',
+      },
+    ],
   },
   plugins: [
     appTools({
-      bundler: 'rspack', // Set to 'webpack' to enable webpack
+      bundler: 'rspack',
     }),
   ],
 });

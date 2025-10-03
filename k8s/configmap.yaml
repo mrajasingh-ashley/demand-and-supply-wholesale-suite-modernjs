@@ -4,6 +4,16 @@ metadata:
   name: demand-planning-web-config
   namespace: demand-planning
 data:
-  NODE_ENV: "development"
-  API_BASE_URL: "http://demand-supply-api:8080/api"
-  APP_NAME: "Demand & Supply Wholesale"
+  # This key, APP_SETTINGS_JSON, is what our entrypoint script looks for.
+  # The value is the entire JSON content for the development environment.
+  # The '|-` syntax is YAML for a multi-line string.
+  APP_SETTINGS_JSON: |-
+    {
+      "Environment": "Development",
+      "AppName": "Demand Planning Web",
+      "ClientRequestWaitTimeMinutes": 1,
+      "HttpSettings": {
+        "MaxRetryCountForApi": "2",
+        "WaitTimeInSecsForApiRetry": "5"
+      }
+    }

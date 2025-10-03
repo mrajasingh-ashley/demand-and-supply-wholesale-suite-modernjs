@@ -9,11 +9,15 @@ import {
 import { Helmet } from '@modern-js/runtime/head';
 import { Card, Col, Divider, Row, Space, Tag, Typography } from 'antd';
 
+import { getConfig } from '../config';
+
 const { Title, Paragraph, Text } = Typography;
 
 export default function HomePage() {
+  const config = getConfig();
+  console.log('HomePage Component - Reading config from browser:', config);
   // Access the environment variable from the build process
-  const environment = process.env.NODE_ENV || 'unknown';
+  const environment = config.Environment;
 
   console.log('Current Application Environment:', environment);
 

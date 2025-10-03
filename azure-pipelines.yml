@@ -11,53 +11,42 @@ variables:
   tag: "$(Build.BuildId)"
 
 stages:
+  # --- STAGE 1: BUILD A GENERIC IMAGE ---
   - stage: Build
-    displayName: "Build and Push Docker Image"
+    displayName: "Build Generic Application Image"
     jobs:
       - job: Build
         displayName: "Build"
         pool:
           vmImage: "ubuntu-latest"
         steps:
-          - task: NodeTool@0
-            displayName: "Install Node.js"
-            inputs:
-              versionSpec: "22.x"
-
-          - script: |
-              npm install
-              npm run build
-            displayName: "Install dependencies and build"
-
+          # The build process is now completely environment-agnostic.
+          # It creates one image that can be deployed to any environment.
           - task: Docker@2
-            displayName: "Build and push Docker image"
+            displayName: "Build and Push Generic Docker Image"
             inputs:
               containerRegistry: "ashleyfurniture"
               repository: "$(imageRepository)"
               command: "buildAndPush"
               Dockerfile: "$(dockerfilePath)"
+              buildContext: "$(Build.SourcesDirectory)"
               tags: |
                 $(tag)
                 latest
 
-          - task: CopyFiles@2
-            displayName: "Copy K8s files to artifact"
-            inputs:
-              SourceFolder: "$(Build.SourcesDirectory)/k8s"
-              Contents: "**"
-              TargetFolder: "$(Build.ArtifactStagingDirectory)"
-
+          # We publish the Kubernetes manifests as an artifact so the deploy stage can use them.
           - task: PublishBuildArtifacts@1
-            displayName: "Publish deployment artifact"
+            displayName: "Publish K8s Manifests"
             inputs:
-              PathtoPublish: "$(Build.ArtifactStagingDirectory)"
+              PathtoPublish: "$(Build.SourcesDirectory)/k8s"
               ArtifactName: "k8s-manifests"
               publishLocation: "Container"
 
+  # --- STAGE 2: DEPLOY TO DEVELOPMENT ---
   - stage: Deploy_Dev
     displayName: "Deploy to Development"
     dependsOn: Build
-    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/dev'), eq(variables['Build.SourceBranch'], 'refs/heads/main')))
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranchName'], 'dev'), eq(variables['Build.SourceBranchName'], 'main')))
     jobs:
       - deployment: DeployToDev
         displayName: "Deploy to Dev Kubernetes"
@@ -68,6 +57,7 @@ stages:
           runOnce:
             deploy:
               steps:
+                # Step 1: Download the Kubernetes manifests that were published by the Build stage.
                 - task: DownloadBuildArtifacts@0
                   displayName: "Download K8s manifests"
                   inputs:
@@ -76,12 +66,14 @@ stages:
                     artifactName: "k8s-manifests"
                     downloadPath: "$(Pipeline.Workspace)"
 
+                # Step 2: Deploy the resources to Kubernetes.
                 - task: KubernetesManifest@1
                   displayName: "Deploy to Kubernetes"
                   inputs:
                     action: "deploy"
                     kubernetesServiceConnection: "dev-kube"
                     namespace: "demand-planning"
+                    # This applies all our configuration files. The runtime injection happens inside the cluster.
                     manifests: |
                       $(Pipeline.Workspace)/k8s-manifests/configmap.yaml
                       $(Pipeline.Workspace)/k8s-manifests/deployment.yaml

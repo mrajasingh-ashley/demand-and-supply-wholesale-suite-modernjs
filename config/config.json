@@ -1,0 +1,9 @@
+{
+  "Environment": "Local Development",
+  "AppName": "Demand Planning Web",
+  "ClientRequestWaitTimeMinutes": 1,
+  "HttpSettings": {
+    "MaxRetryCountForApi": "2",
+    "WaitTimeInSecsForApiRetry": "5"
+  }
+}
