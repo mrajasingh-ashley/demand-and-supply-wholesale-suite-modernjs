@@ -1,12 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: demand-supply-frontend-ingress
+  name: demand-planning-web-ingress
   namespace: demand-planning
   annotations:
     # This annotation is important for React apps. It ensures all paths are sent to your app.
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  tls:
+    - hosts:
+        - "demand-planning-dev.ashleyfurniture.com"
+
+      secretName: "demand-planning-dev-tls"
+
   rules:
     # This is the hostname that will point to your application.
     - host: "demand-planning-dev.ashleyfurniture.com"
@@ -16,8 +22,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                # This must match the name of your internal Kubernetes service.
-                name: demand-supply-frontend
+                name: demand-planning-web
                 port:
-                  # This must match the port your service exposes (not the container port).
                   number: 80

@@ -5,7 +5,7 @@ trigger:
       - dev
 
 variables:
-  imageRepository: "afi/demand-planning/wholesale-suite-frontend"
+  imageRepository: "afi/demand-planning/demand-planning-web"
   containerRegistry: "ashleyfurniture.azurecr.io"
   dockerfilePath: "Dockerfile"
   tag: "$(Build.BuildId)"
@@ -83,6 +83,7 @@ stages:
                     kubernetesServiceConnection: "dev-kube"
                     namespace: "demand-planning"
                     manifests: |
+                      $(Pipeline.Workspace)/k8s-manifests/configmap.yaml
                       $(Pipeline.Workspace)/k8s-manifests/deployment.yaml
                       $(Pipeline.Workspace)/k8s-manifests/service.yaml
                       $(Pipeline.Workspace)/k8s-manifests/ingress.yaml

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: demand-supply-frontend-config
+  name: demand-planning-web-config
   namespace: demand-planning
 data:
   NODE_ENV: "development"

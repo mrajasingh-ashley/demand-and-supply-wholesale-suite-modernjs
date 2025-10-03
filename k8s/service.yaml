@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: demand-supply-frontend
+  name: demand-planning-web
   namespace: demand-planning
   labels:
-    app: demand-supply-frontend
+    app: demand-planning-web
 spec:
   type: ClusterIP
   ports:
@@ -13,4 +13,4 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: demand-supply-frontend
+    app: demand-planning-web
