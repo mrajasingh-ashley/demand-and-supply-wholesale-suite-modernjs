@@ -30,6 +30,9 @@ COPY --from=builder /app/dist/html/main/index.html .
 # 3. Copy the runtime 'config.json' file to the web root so it can be fetched.
 COPY --from=builder /app/dist/config.json .
 
+#    Copy the favicon.svg from our config folder in the build output.
+COPY --from=builder /app/dist/favicon.svg .
+
 # 4. Copy and set up our entrypoint script for runtime configuration.
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
