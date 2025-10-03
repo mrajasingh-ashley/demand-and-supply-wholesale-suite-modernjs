@@ -12,15 +12,48 @@ import { Card, Col, Divider, Row, Space, Tag, Typography } from 'antd';
 const { Title, Paragraph, Text } = Typography;
 
 export default function HomePage() {
+  // Access the environment variable from the build process
+  const environment = process.env.NODE_ENV || 'unknown';
+
+  console.log('Current Application Environment:', environment);
+
+  const getEnvColor = (env: string) => {
+    switch (env.toLowerCase()) {
+      case 'production':
+        return 'success'; // Green
+      case 'staging':
+        return 'warning'; // Orange/Yellow
+      case 'development':
+        return 'processing'; // Blue
+      default:
+        return 'default'; // Grey
+    }
+  };
+
+  const envColor = getEnvColor(environment);
+
   return (
     <>
       <Helmet>
-        <title>Demand & Supply Wholesale</title>
+        <title>Demand Planning Web</title>
       </Helmet>
 
       <div style={{ padding: '40px' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <Title level={1}>Demand & Supply Wholesale</Title>
+          <Title level={1}>
+            Demand Planning Web
+            <Tag
+              color={envColor}
+              style={{
+                marginLeft: '16px',
+                verticalAlign: 'middle',
+                fontSize: '14px',
+              }}
+            >
+              {environment.toUpperCase()}
+            </Tag>
+          </Title>
+
           <Paragraph style={{ fontSize: '18px', color: '#666' }}>
             Modern React application built with enterprise-grade technologies
           </Paragraph>
