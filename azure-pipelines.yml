@@ -36,13 +36,12 @@ stages:
 
           # We publish the Kubernetes manifests as an artifact so the deploy stage can use them.
           - task: PublishBuildArtifacts@1
-            displayName: "Publish K8s Manifests"
+            displayName: "Publish Kubernetes Manifests"
             inputs:
-              PathtoPublish: "$(Build.SourcesDirectory)/k8s"
-              ArtifactName: "k8s-manifests"
+              PathtoPublish: "$(Build.SourcesDirectory)/Kubernetes"
+              ArtifactName: "kubernetes-manifests"
               publishLocation: "Container"
 
-  # --- STAGE 2: DEPLOY TO DEVELOPMENT ---
   - stage: Deploy_Dev
     displayName: "Deploy to Development"
     dependsOn: Build
@@ -59,25 +58,54 @@ stages:
               steps:
                 # Step 1: Download the Kubernetes manifests that were published by the Build stage.
                 - task: DownloadBuildArtifacts@0
-                  displayName: "Download K8s manifests"
+                  displayName: "Download Kubernetes manifests"
                   inputs:
                     buildType: "current"
                     downloadType: "single"
-                    artifactName: "k8s-manifests"
+                    artifactName: "kubernetes-manifests"
                     downloadPath: "$(Pipeline.Workspace)"
 
-                # Step 2: Deploy the resources to Kubernetes.
                 - task: KubernetesManifest@1
-                  displayName: "Deploy to Kubernetes"
+                  displayName: "Deploy to Dev Kubernetes"
                   inputs:
                     action: "deploy"
                     kubernetesServiceConnection: "dev-kube"
                     namespace: "demand-planning"
                     # This applies all our configuration files. The runtime injection happens inside the cluster.
-                    manifests: |
-                      $(Pipeline.Workspace)/k8s-manifests/configmap.yaml
-                      $(Pipeline.Workspace)/k8s-manifests/deployment.yaml
-                      $(Pipeline.Workspace)/k8s-manifests/service.yaml
-                      $(Pipeline.Workspace)/k8s-manifests/ingress.yaml
+                    manifests: "$(Pipeline.Workspace)/kubernetes-manifests/Dev/*.yaml"
+                    containers: |
+                      $(containerRegistry)/$(imageRepository):$(tag)
+
+  - stage: Deploy_Stage
+    displayName: "Deploy to Staging"
+    dependsOn: Deploy_Dev
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranchName'], 'dev'), eq(variables['Build.SourceBranchName'], 'main')))
+    jobs:
+      - deployment: DeployToStage
+        displayName: "Deploy to Stage Kubernetes"
+        environment: "afi-stage-kube.demand-planning"
+        pool:
+          vmImage: "ubuntu-latest"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Step 1: Download the Kubernetes manifests that were published by the Build stage.
+                - task: DownloadBuildArtifacts@0
+                  displayName: "Download Kubernetes manifests"
+                  inputs:
+                    buildType: "current"
+                    downloadType: "single"
+                    artifactName: "kubernetes-manifests"
+                    downloadPath: "$(Pipeline.Workspace)"
+
+                - task: KubernetesManifest@1
+                  displayName: "Deploy to Stage Kubernetes"
+                  inputs:
+                    action: "deploy"
+                    kubernetesServiceConnection: "stage-kube"
+                    namespace: "demand-planning"
+                    # This applies all our configuration files. The runtime injection happens inside the cluster.
+                    manifests: "$(Pipeline.Workspace)/kubernetes-manifests/Stage/*.yaml"
                     containers: |
                       $(containerRegistry)/$(imageRepository):$(tag)

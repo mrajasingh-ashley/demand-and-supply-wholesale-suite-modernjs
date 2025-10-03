@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demand-planning-web-config
+  namespace: demand-planning
+data:
+  # This key, APP_SETTINGS_JSON, is what our entrypoint script looks for.
+  # The value is the entire JSON content for the development environment.
+  # The '|-` syntax is YAML for a multi-line string.
+  APP_SETTINGS_JSON: |-
+    {
+      "Environment": "Staging",
+      "AppName": "Demand Planning Web",
+      "ClientRequestWaitTimeMinutes": 10,
+      "HttpSettings": {
+        "MaxRetryCountForApi": "3",
+        "WaitTimeInSecsForApiRetry": "10"
+      }
+    }
