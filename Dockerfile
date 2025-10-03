@@ -1,35 +1,38 @@
 # --- Stage 1: The "Builder" ---
-# This stage installs dependencies and builds the React application.
+# This stage builds the React application, creating the final static assets.
 FROM node:22-alpine AS builder
 
 WORKDIR /app
-
-# Copy package files first to leverage Docker's layer caching.
-# If these files don't change, Docker won't reinstall dependencies on every build.
 COPY package*.json ./
-
-# Use 'npm ci' in pipelines. It's faster and more reliable than 'npm install'.
 RUN npm ci
-
-# Copy the rest of your application's source code.
 COPY . .
-
-# Build the application. This creates the generic, environment-agnostic static files.
 RUN npm run build
 
-
 # --- Stage 2: The Final "Production" Image ---
-# This stage creates the final, lightweight image that will be deployed.
+# This stage creates a small, secure Nginx image to serve the built files.
 FROM nginx:alpine
 
-# Copy the static files built in the 'builder' stage into the Nginx web root.
-COPY --from=builder /app/dist /usr/share/nginx/html
+# The Nginx web server's root directory is /usr/share/nginx/html
+WORKDIR /usr/share/nginx/html
 
-# Copy our new entrypoint script into the final image.
+# Clean out the default Nginx placeholder content
+RUN rm -rf ./*
+
+# The following commands precisely copy the built files into the locations
+# where Nginx expects to find them.
+
+# 1. Copy the 'static' folder (which contains all your CSS, JS, etc.)
+COPY --from=builder /app/dist/static ./static
+
+# 2. Copy the 'index.html' file from its nested directory to the web root.
+COPY --from=builder /app/dist/html/main/index.html .
+
+# 3. Copy the runtime 'config.json' file to the web root so it can be fetched.
+COPY --from=builder /app/dist/config.json .
+
+# 4. Copy and set up our entrypoint script for runtime configuration.
 COPY ./entrypoint.sh /entrypoint.sh
-
-# Make the entrypoint script executable.
 RUN chmod +x /entrypoint.sh
 
-# Set the entrypoint. This is the command that will run when the container starts.
+# This tells the container to run our script before starting the web server.
 ENTRYPOINT ["/entrypoint.sh"]
