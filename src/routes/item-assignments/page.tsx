@@ -1,4 +1,4 @@
-import ItemAssignmentManager from '../../components/ItemAssignmentManager';
+import ItemAssignmentManager from '../../features/ItemAssignmentManager';
 
 export default function ItemAssignments() {
   return <ItemAssignmentManager />;

@@ -72,6 +72,14 @@ export default function AppLayout() {
       key: '/item-assignments',
       label: <Link to="/item-assignments">Item Assignments</Link>,
     },
+    {
+      key: '/item-location-override',
+      label: <Link to="/item-location-override">Item Location Override</Link>,
+    },
+    {
+      key: '/planning-master-control',
+      label: <Link to="/planning-master-control">Planning Master Control</Link>,
+    },
   ];
 
   return (
