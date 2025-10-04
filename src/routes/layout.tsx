@@ -1,7 +1,18 @@
 import { Link, Outlet } from '@modern-js/runtime/router';
-import { Alert, Layout, Menu, Spin } from 'antd';
+import { Alert, Button, Layout, Menu, Result, Spin } from 'antd';
 import { useEffect, useState } from 'react';
-import { loadConfig } from '../config'; // Import our loader function
+import { loadConfig } from '../config';
+
+import {
+  AuthenticatedTemplate,
+  MsalProvider,
+  UnauthenticatedTemplate,
+} from '@azure/msal-react';
+import { msalInstance } from '../services/authService';
+
+// Import our new AuthDisplay component
+import { AuthDisplay } from '../components/AuthDisplay';
+
 import 'antd/dist/reset.css';
 
 const { Header, Content } = Layout;
@@ -28,7 +39,6 @@ export default function AppLayout() {
   const [isConfigLoaded, setConfigLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // This hook runs once when the app first loads.
   useEffect(() => {
     async function initializeApp() {
       try {
@@ -43,7 +53,7 @@ export default function AppLayout() {
       }
     }
     initializeApp();
-  }, []); // The empty array ensures this runs only once.
+  }, []);
 
   if (error) {
     return (
@@ -56,18 +66,12 @@ export default function AppLayout() {
     );
   }
 
-  // --- THIS IS THE "LOADING GATE" ---
-  // If the config is not loaded yet, we ONLY render the spinner.
-  // The <Outlet /> (and your HomePage) will not be rendered.
   if (!isConfigLoaded) {
     return <AppLoader />;
   }
 
   const menuItems = [
-    {
-      key: '/',
-      label: <Link to="/">Home</Link>,
-    },
+    { key: '/', label: <Link to="/">Home</Link> },
     {
       key: '/item-assignments',
       label: <Link to="/item-assignments">Item Assignments</Link>,
@@ -83,18 +87,45 @@ export default function AppLayout() {
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header>
-        <Menu
-          theme="dark"
-          mode="horizontal"
-          items={menuItems}
-          style={{ lineHeight: '64px' }}
-        />
-      </Header>
-      <Content>
-        <Outlet />
-      </Content>
-    </Layout>
+    <MsalProvider instance={msalInstance}>
+      <Layout style={{ minHeight: '100vh' }}>
+        <Header
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          {/* We only show the menu if the user is authenticated */}
+          <AuthenticatedTemplate>
+            <Menu
+              theme="dark"
+              mode="horizontal"
+              items={menuItems}
+              style={{ lineHeight: '64px', flex: 1, border: 'none' }}
+            />
+          </AuthenticatedTemplate>
+
+          {/* This component handles showing the login/logout UI */}
+          <AuthDisplay />
+        </Header>
+        <Content>
+          {/* This is the main content protection */}
+          <AuthenticatedTemplate>
+            <Outlet />{' '}
+            {/* The actual pages are only rendered if the user is logged in */}
+          </AuthenticatedTemplate>
+
+          <UnauthenticatedTemplate>
+            <Result
+              status="403"
+              title="Authentication Required"
+              subTitle="Please sign in to access the Demand Planning Web application."
+              extra={<AuthDisplay />} // We can reuse the AuthDisplay here for a nice UI
+            />
+          </UnauthenticatedTemplate>
+        </Content>
+      </Layout>
+    </MsalProvider>
   );
 }
