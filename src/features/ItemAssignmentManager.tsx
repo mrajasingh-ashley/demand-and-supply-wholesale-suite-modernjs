@@ -5,11 +5,9 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import {
-  Alert,
   Button,
   Card,
   Input,
-  type InputRef,
   Space,
   Table,
   Tag,
@@ -17,8 +15,10 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { AsyncErrorDisplay } from '../components/AsyncErrorDisplay';
+import { useAsyncError } from '../hooks/useAsyncError';
+import { useTableState } from '../hooks/useTableState';
 import { itemAssignmentService } from '../services';
 import type { UiItemAssignment } from '../services/itemAssignment.service';
 import {
@@ -67,45 +67,55 @@ const mockActivityLogs: ActivityLog[] = [
 ];
 
 export default function ItemAssignmentManager() {
+  // Component-specific state
   const [data, setData] = useState<UiItemAssignment[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pageSize, setPageSize] = useState(10);
-  const [columnSearchText, setColumnSearchText] = useState<
-    Record<string, string>
-  >({});
-  const [columnSearchedColumn, setColumnSearchedColumn] = useState('');
-  const searchInput = useRef<InputRef>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [filteredData, setFilteredData] = useState<UiItemAssignment[]>([]);
 
-  // Wrap fetchData in useCallback to make it stable for useEffect
+  // Reusable hooks
+  const { error, handleAsyncError, clearError, retry } = useAsyncError();
+  const {
+    pageSize,
+    searchTerm,
+    searchInput,
+    setPageSize,
+    handleColumnSearch,
+    handleColumnReset,
+    handleSearch,
+    handleSearchChange,
+  } = useTableState();
+
+  // Business logic
   const fetchData = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    clearError();
 
     try {
       const allData = await itemAssignmentService.getAllItemAssignments();
       setData(allData);
+      setFilteredData(allData);
       console.log(`Loaded ${allData.length} records`);
     } catch (err) {
-      setError('Failed to fetch item assignments.');
-      console.error(err);
+      handleAsyncError(err, 'loading item assignments');
     } finally {
       setLoading(false);
     }
-  }, []); // Empty dependency array since it doesn't depend on any props/state
+  }, [handleAsyncError, clearError]);
 
+  const handleRetry = () => {
+    retry(fetchData);
+  };
+
+  // Component lifecycle
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  // Search functionality
   useEffect(() => {
     if (!searchTerm.trim()) {
-      // If no search term, show all data
       setFilteredData(data);
     } else {
-      // Filter data using our utility function
       const searchableFields: (keyof UiItemAssignment)[] = [
         'itemId',
         'itemName',
@@ -116,51 +126,14 @@ export default function ItemAssignmentManager() {
       const filtered = searchAcrossColumns(searchTerm, data, searchableFields);
       setFilteredData(filtered);
     }
-  }, [searchTerm, data]); // Re-run when search term or data changes
+  }, [searchTerm, data]);
 
-  const handleSearch = (value: string) => {
-    console.log('Search button clicked with value:', value);
-    setSearchTerm(value);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('Search input changed:', e.target.value);
-    setSearchTerm(e.target.value);
-  };
-
-  // --- ACTIONS ---
+  // Actions
   const handleEdit = (record: UiItemAssignment) => console.log('Edit:', record);
   const handleDelete = (record: UiItemAssignment) =>
     console.log('Delete:', record);
 
-  const handleColumnSearch = (
-    selectedKeys: string[],
-    confirm: () => void,
-    dataIndex: string,
-  ) => {
-    confirm();
-    setColumnSearchText(prev => ({
-      ...prev,
-      [dataIndex]: selectedKeys[0] || '',
-    }));
-    setColumnSearchedColumn(dataIndex);
-  };
-
-  const handleColumnReset = (
-    clearFilters: (() => void) | undefined,
-    dataIndex: string,
-  ) => {
-    if (clearFilters) {
-      clearFilters();
-    }
-    setColumnSearchText(prev => ({
-      ...prev,
-      [dataIndex]: '',
-    }));
-    setColumnSearchedColumn('');
-  };
-
-  // Create the reusable column search props function
+  // Column configuration
   const getColumnSearchProps = (dataIndex: keyof UiItemAssignment) =>
     createColumnSearchProps(
       dataIndex,
@@ -169,8 +142,6 @@ export default function ItemAssignmentManager() {
       handleColumnReset,
     );
 
-  // --- COLUMNS ---
-  // Update your columns in ItemAssignmentManager.tsx
   const columns: ColumnsType<UiItemAssignment> = [
     {
       title: 'ITEM ID',
@@ -249,189 +220,188 @@ export default function ItemAssignmentManager() {
         Manage customer group assignments for items
       </p>
 
+      {/* Error display */}
       {error && (
-        <Alert
-          message="Error"
-          description={error}
-          type="error"
-          showIcon
-          closable
-          style={{ marginBottom: '16px' }}
+        <AsyncErrorDisplay
+          error={error}
+          onRetry={handleRetry}
+          title="Failed to Load Item Assignments"
         />
       )}
 
-      <Card style={{ marginBottom: '16px' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Space>
-            <Search
-              placeholder="Search across all columns..."
-              onSearch={handleSearch} // When user presses Enter or clicks search icon
-              onChange={handleSearchChange} // When user types (real-time)
-              value={searchTerm} // Controlled input
-              style={{ width: 300 }}
-              allowClear // Adds X button to clear
+      {/* Main content - only show if no error */}
+      {!error && (
+        <>
+          {/* Search and filter controls */}
+          <Card style={{ marginBottom: '16px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Space>
+                <Search
+                  placeholder="Search across all columns..."
+                  onSearch={handleSearch}
+                  onChange={handleSearchChange}
+                  value={searchTerm}
+                  style={{ width: 300 }}
+                  allowClear
+                />
+                <Button icon={<FilterOutlined />}>Filter</Button>
+              </Space>
+              <Button type="primary" icon={<PlusOutlined />}>
+                New Assignment
+              </Button>
+            </div>
+          </Card>
+
+          {/* Data table */}
+          <Card>
+            <Table
+              columns={columns}
+              dataSource={filteredData}
+              loading={loading}
+              rowKey="key"
+              scroll={{
+                x: 1000,
+                y: 500,
+              }}
+              pagination={{
+                pageSize: pageSize,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                onShowSizeChange: (current, size) => {
+                  console.log('Page size changed to:', size);
+                  setPageSize(size);
+                },
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} items`,
+                position: ['bottomRight'],
+              }}
+              size="small"
             />
-            <Button icon={<FilterOutlined />}>Filter</Button>
-          </Space>
-          <Button type="primary" icon={<PlusOutlined />}>
-            New Assignment
-          </Button>
-        </div>
-      </Card>
+          </Card>
 
-      <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredData}
-          loading={loading}
-          rowKey="key"
-          scroll={{
-            x: 1000, // Horizontal scroll for wide tables
-            y: 500, // Fixed height with vertical scroll
-          }}
-          pagination={{
-            pageSize: pageSize,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            pageSizeOptions: ['10', '20', '50', '100'],
-            onShowSizeChange: (current, size) => {
-              console.log('Page size changed to:', size);
-              setPageSize(size);
-            },
-            showTotal: (total, range) =>
-              `${range[0]}-${range[1]} of ${total} items`,
-            position: ['bottomRight'], // Move pagination to bottom center
-          }}
-          size="small" // Makes rows more compact
-        />{' '}
-      </Card>
-      {/* Recent Activity Logs Section */}
-      <Card title="Recent Activity Logs" style={{ marginTop: '16px' }}>
-        <div>
-          {mockActivityLogs.map((log, index) => {
-            const getActivityIcon = (type: string) => {
-              switch (type) {
-                case 'assigned':
-                  return <EditOutlined style={{ color: '#1890ff' }} />;
-                case 'added':
-                  return <PlusOutlined style={{ color: '#52c41a' }} />;
-                case 'removed':
-                  return <DeleteOutlined style={{ color: '#ff4d4f' }} />;
-                default:
-                  return <EditOutlined />;
-              }
-            };
+          {/* Recent Activity Logs Section */}
+          <Card title="Recent Activity Logs" style={{ marginTop: '16px' }}>
+            <div>
+              {mockActivityLogs.map(log => {
+                const getActivityIcon = (type: string) => {
+                  switch (type) {
+                    case 'assigned':
+                      return <EditOutlined style={{ color: '#1890ff' }} />;
+                    case 'added':
+                      return <PlusOutlined style={{ color: '#52c41a' }} />;
+                    case 'removed':
+                      return <DeleteOutlined style={{ color: '#ff4d4f' }} />;
+                    default:
+                      return <EditOutlined />;
+                  }
+                };
 
-            return (
-              <div
-                key={log.key}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  padding: '8px 0',
-                  gap: '12px',
-                }}
-              >
-                {/* Icon */}
-                <div
-                  style={{
-                    fontSize: '16px',
-                    marginTop: '2px',
-                    minWidth: '16px',
-                  }}
-                >
-                  {getActivityIcon(log.type)}
-                </div>
-
-                {/* Main content area - single line with timestamp on right */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    width: '100%',
-                  }}
-                >
-                  {/* Left side - Activity text and user */}
-                  <div>
-                    {/* Activity description on first line */}
-                    <div style={{ marginBottom: '2px' }}>
-                      {log.type === 'assigned' && (
-                        <>
-                          Item <strong>{log.itemId}</strong> assigned to{' '}
-                          <Tag color="cyan" style={{ margin: '0 2px' }}>
-                            {log.customerGroup}
-                          </Tag>
-                        </>
-                      )}
-                      {log.type === 'added' && (
-                        <>
-                          New Item <strong>{log.itemId}</strong> added to{' '}
-                          <Tag color="green" style={{ margin: '0 2px' }}>
-                            {log.customerGroup}
-                          </Tag>
-                        </>
-                      )}
-                      {log.type === 'removed' && (
-                        <>
-                          Removed Item <strong>{log.itemId}</strong> from{' '}
-                          <Tag color="red" style={{ margin: '0 2px' }}>
-                            {log.customerGroup}
-                          </Tag>
-                        </>
-                      )}
-                    </div>
-                    {/* User info on second line */}
-                    <div
-                      style={{
-                        fontSize: '12px',
-                        color: '#8c8c8c',
-                        margin: 0,
-                        padding: 0,
-                        textAlign: 'left',
-                      }}
-                    >
-                      By: {log.userName}
-                    </div>
-                  </div>
-
-                  {/* Right side - Timestamp */}
+                return (
                   <div
+                    key={log.key}
                     style={{
-                      fontSize: '12px',
-                      color: '#8c8c8c',
-                      whiteSpace: 'nowrap',
-                      marginLeft: '16px',
-                      alignSelf: 'flex-start',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      padding: '8px 0',
+                      gap: '12px',
                     }}
                   >
-                    {log.timestamp}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                    <div
+                      style={{
+                        fontSize: '16px',
+                        marginTop: '2px',
+                        minWidth: '16px',
+                      }}
+                    >
+                      {getActivityIcon(log.type)}
+                    </div>
 
-          {/* View All Logs at the bottom */}
-          <div
-            style={{
-              textAlign: 'center',
-              marginTop: '16px',
-              paddingTop: '8px',
-            }}
-          >
-            <Button type="link" style={{ padding: 0, fontSize: '14px' }}>
-              View All Logs
-            </Button>
-          </div>
-        </div>
-      </Card>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        width: '100%',
+                      }}
+                    >
+                      <div>
+                        <div style={{ marginBottom: '2px' }}>
+                          {log.type === 'assigned' && (
+                            <>
+                              Item <strong>{log.itemId}</strong> assigned to{' '}
+                              <Tag color="cyan" style={{ margin: '0 2px' }}>
+                                {log.customerGroup}
+                              </Tag>
+                            </>
+                          )}
+                          {log.type === 'added' && (
+                            <>
+                              New Item <strong>{log.itemId}</strong> added to{' '}
+                              <Tag color="green" style={{ margin: '0 2px' }}>
+                                {log.customerGroup}
+                              </Tag>
+                            </>
+                          )}
+                          {log.type === 'removed' && (
+                            <>
+                              Removed Item <strong>{log.itemId}</strong> from{' '}
+                              <Tag color="red" style={{ margin: '0 2px' }}>
+                                {log.customerGroup}
+                              </Tag>
+                            </>
+                          )}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '12px',
+                            color: '#8c8c8c',
+                            margin: 0,
+                            padding: 0,
+                            textAlign: 'left',
+                          }}
+                        >
+                          By: {log.userName}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: '12px',
+                          color: '#8c8c8c',
+                          whiteSpace: 'nowrap',
+                          marginLeft: '16px',
+                          alignSelf: 'flex-start',
+                        }}
+                      >
+                        {log.timestamp}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div
+                style={{
+                  textAlign: 'center',
+                  marginTop: '16px',
+                  paddingTop: '8px',
+                }}
+              >
+                <Button type="link" style={{ padding: 0, fontSize: '14px' }}>
+                  View All Logs
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

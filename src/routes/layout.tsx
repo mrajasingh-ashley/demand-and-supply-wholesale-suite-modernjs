@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import '../styles/antd-overrides.css';
 import { Link, Outlet } from '@modern-js/runtime/router';
 import { Alert, Button, Layout, Menu, Result, Spin } from 'antd';
@@ -85,6 +86,15 @@ export default function AppLayout() {
       key: '/planning-master-control',
       label: <Link to="/planning-master-control">Planning Master Control</Link>,
     },
+    // Add developer tools menu item (only in development)
+    ...(process.env.NODE_ENV === 'development'
+      ? [
+          {
+            key: '/developer-tools',
+            label: <Link to="/developer-tools">🔧 Developer Tools</Link>,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -111,20 +121,22 @@ export default function AppLayout() {
           <AuthDisplay />
         </Header>
         <Content>
-          {/* This is the main content protection */}
-          <AuthenticatedTemplate>
-            <Outlet />{' '}
-            {/* The actual pages are only rendered if the user is logged in */}
-          </AuthenticatedTemplate>
+          <ErrorBoundary>
+            {/* This is the main content protection */}
+            <AuthenticatedTemplate>
+              <Outlet />{' '}
+              {/* The actual pages are only rendered if the user is logged in */}
+            </AuthenticatedTemplate>
 
-          <UnauthenticatedTemplate>
-            <Result
-              status="403"
-              title="Authentication Required"
-              subTitle="Please sign in to access the Demand Planning Web application."
-              extra={<AuthDisplay />} // We can reuse the AuthDisplay here for a nice UI
-            />
-          </UnauthenticatedTemplate>
+            <UnauthenticatedTemplate>
+              <Result
+                status="403"
+                title="Authentication Required"
+                subTitle="Please sign in to access the Demand Planning Web application."
+                extra={<AuthDisplay />} // We can reuse the AuthDisplay here for a nice UI
+              />
+            </UnauthenticatedTemplate>
+          </ErrorBoundary>
         </Content>
       </Layout>
     </MsalProvider>

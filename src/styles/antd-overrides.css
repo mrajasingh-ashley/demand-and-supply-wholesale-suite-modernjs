@@ -1,8 +1,6 @@
 /* Hide table scrollbar when not needed */
 .ant-table-body {
   overflow-y: auto !important;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
 }
 
 .ant-table-body::-webkit-scrollbar {
