@@ -12,6 +12,9 @@ RUN npm run build
 # This stage creates a small, secure Nginx image to serve the built files.
 FROM nginx:alpine
 
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # The Nginx web server's root directory is /usr/share/nginx/html
 WORKDIR /usr/share/nginx/html
 

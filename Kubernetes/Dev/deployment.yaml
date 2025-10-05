@@ -42,13 +42,18 @@ spec:
         # Health probes should check Nginx, not the old Node.js server port
         livenessProbe:
           httpGet:
-            path: /
+            path: /health
             port: 80
           initialDelaySeconds: 15
           periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+
         readinessProbe:
           httpGet:
-            path: /
+            path: /health
             port: 80
           initialDelaySeconds: 5
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3

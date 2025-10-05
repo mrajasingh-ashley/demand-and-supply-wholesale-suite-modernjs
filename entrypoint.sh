@@ -18,6 +18,8 @@ fi
 
 echo "Configuration complete. Starting Nginx web server..."
 
+nginx -t
+
 # This command starts the main Nginx process. 'exec' is a best practice that makes
 # Nginx the main process (PID 1), which helps the container shut down gracefully.
 exec nginx -g 'daemon off;'
