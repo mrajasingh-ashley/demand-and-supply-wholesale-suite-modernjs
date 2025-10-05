@@ -4,8 +4,8 @@ metadata:
   name: demand-planning-web-ingress
   namespace: demand-planning
   annotations:
-    # This annotation is important for React apps. It ensures all paths are sent to your app.
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   tls:
     - hosts:

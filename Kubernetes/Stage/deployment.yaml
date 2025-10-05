@@ -4,17 +4,17 @@ metadata:
   name: demand-planning-web
   namespace: demand-planning
   labels:
-    app: demand-planning-web # Unique label
+    app: demand-planning-web
     environment: staging
 spec:
-  replicas: 1 # Staging might only need 1 replica
+  replicas: 2
   selector:
     matchLabels:
-      app: demand-planning-web # Selector must match the new label
+      app: demand-planning-web
   template:
     metadata:
       labels:
-        app: demand-planning-web # Pods get the new label
+        app: demand-planning-web
     spec:
       containers:
       - name: frontend
@@ -25,7 +25,7 @@ spec:
         - name: APP_SETTINGS_JSON
           valueFrom:
             configMapKeyRef:
-              name: demand-planning-web-config # Points to the new staging ConfigMap
+              name: demand-planning-web-config
               key: APP_SETTINGS_JSON
 
         resources:
@@ -38,13 +38,18 @@ spec:
         # Health probes should check Nginx, not the old Node.js server port
         livenessProbe:
           httpGet:
-            path: /
+            path: /health
             port: 80
           initialDelaySeconds: 15
           periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+
         readinessProbe:
           httpGet:
-            path: /
+            path: /health
             port: 80
           initialDelaySeconds: 5
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
