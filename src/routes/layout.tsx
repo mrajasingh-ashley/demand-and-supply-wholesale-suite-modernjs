@@ -1,3 +1,4 @@
+import '../styles/antd-overrides.css';
 import { Link, Outlet } from '@modern-js/runtime/router';
 import { Alert, Button, Layout, Menu, Result, Spin } from 'antd';
 import { useEffect, useState } from 'react';

@@ -3,6 +3,7 @@
 interface AppConfig {
   Environment: string;
   AppName: string;
+  API_BASE_URL: string;
   ClientRequestWaitTimeMinutes: number;
   HttpSettings: {
     MaxRetryCountForApi: string;
@@ -26,6 +27,8 @@ export async function loadConfig(): Promise<void> {
     appConfig = {
       Environment: 'Error - Fallback',
       AppName: 'Demand Planning Web',
+      API_BASE_URL:
+        'https://aarcwivdsq14182.ashleyfurniture.com/Integrations/api',
       ClientRequestWaitTimeMinutes: 1,
       HttpSettings: {
         MaxRetryCountForApi: '2',

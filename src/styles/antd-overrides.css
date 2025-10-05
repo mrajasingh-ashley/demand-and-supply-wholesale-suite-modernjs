@@ -1,0 +1,19 @@
+/* Hide table scrollbar when not needed */
+.ant-table-body {
+  overflow-y: auto !important;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.ant-table-body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* You can add other Ant Design overrides here too */
+.ant-table-thead > tr > th {
+  font-weight: 600; /* Make headers bolder */
+}
+
+.ant-pagination {
+  margin-top: 16px !important; /* Add consistent spacing */
+}

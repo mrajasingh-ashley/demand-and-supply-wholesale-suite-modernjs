@@ -1,6 +1,7 @@
 {
   "Environment": "Local Development",
   "AppName": "Demand Planning Web",
+  "API_BASE_URL": "http://localhost:51340/Integrations/api",
   "ClientRequestWaitTimeMinutes": 1,
   "HttpSettings": {
     "MaxRetryCountForApi": "2",

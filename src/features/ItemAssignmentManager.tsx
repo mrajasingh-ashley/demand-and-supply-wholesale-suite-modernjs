@@ -3,13 +3,13 @@ import {
   EditOutlined,
   FilterOutlined,
   PlusOutlined,
-  SearchOutlined,
 } from '@ant-design/icons';
 import {
+  Alert,
   Button,
   Card,
   Input,
-  Pagination,
+  type InputRef,
   Space,
   Table,
   Tag,
@@ -18,20 +18,16 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type React from 'react';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { itemAssignmentService } from '../services';
+import type { UiItemAssignment } from '../services/itemAssignment.service';
+import {
+  createColumnSearchProps,
+  searchAcrossColumns,
+} from '../utils/tableHelpers';
 
 const { Title } = Typography;
 const { Search } = Input;
-
-// Define TypeScript interface (similar to C# models)
-interface ItemAssignment {
-  key: string;
-  itemId: string;
-  itemName: string;
-  customerGroup: string;
-  assignedDate: string;
-  lastModifiedBy: string;
-}
 
 interface ActivityLog {
   key: string;
@@ -41,66 +37,6 @@ interface ActivityLog {
   userName: string;
   timestamp: string;
 }
-
-// Static data (like your screenshot)
-const mockData: ItemAssignment[] = [
-  {
-    key: '1',
-    itemId: 'IT001',
-    itemName: 'Premium Widget',
-    customerGroup: '001 - AFICONS',
-    assignedDate: '2023-05-12 09:45:22',
-    lastModifiedBy: 'john.doe',
-  },
-  {
-    key: '2',
-    itemId: 'IT002',
-    itemName: 'Standard Gadget',
-    customerGroup: '010 - RHCUST',
-    assignedDate: '2023-05-15 14:30:05',
-    lastModifiedBy: 'jane.smith',
-  },
-  {
-    key: '3',
-    itemId: 'IT003',
-    itemName: 'Deluxe Component',
-    customerGroup: '011 - HSENT',
-    assignedDate: '2023-05-18 11:20:37',
-    lastModifiedBy: 'robert.johnson',
-  },
-  {
-    key: '4',
-    itemId: 'IT004',
-    itemName: 'Basic Accessory',
-    customerGroup: '012 - HSLUC',
-    assignedDate: '2023-05-20 16:15:42',
-    lastModifiedBy: 'sarah.williams',
-  },
-  {
-    key: '5',
-    itemId: 'IT005',
-    itemName: 'Advanced Tool',
-    customerGroup: '014 - MASSRENT',
-    assignedDate: '2023-05-22 08:50:15',
-    lastModifiedBy: 'michael.brown',
-  },
-  {
-    key: '6',
-    itemId: 'IT006',
-    itemName: 'Premium Service',
-    customerGroup: '015 - ECOMM',
-    assignedDate: '2023-05-24 13:40:29',
-    lastModifiedBy: 'emily.davis',
-  },
-  {
-    key: '7',
-    itemId: 'IT007',
-    itemName: 'Enterprise Solution',
-    customerGroup: '016 - INT',
-    assignedDate: '2023-05-26 10:25:18',
-    lastModifiedBy: 'david.wilson',
-  },
-];
 
 // Static activity log data
 const mockActivityLogs: ActivityLog[] = [
@@ -130,92 +66,160 @@ const mockActivityLogs: ActivityLog[] = [
   },
 ];
 
-const ItemAssignmentManager: React.FC = () => {
-  const [searchText, setSearchText] = useState('');
-  const [filteredData, setFilteredData] = useState(mockData);
+export default function ItemAssignmentManager() {
+  const [data, setData] = useState<UiItemAssignment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pageSize, setPageSize] = useState(10);
+  const [columnSearchText, setColumnSearchText] = useState<
+    Record<string, string>
+  >({});
+  const [columnSearchedColumn, setColumnSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredData, setFilteredData] = useState<UiItemAssignment[]>([]);
 
-  // Handle search functionality
+  // Wrap fetchData in useCallback to make it stable for useEffect
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const allData = await itemAssignmentService.getAllItemAssignments();
+      setData(allData);
+      console.log(`Loaded ${allData.length} records`);
+    } catch (err) {
+      setError('Failed to fetch item assignments.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Empty dependency array since it doesn't depend on any props/state
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      // If no search term, show all data
+      setFilteredData(data);
+    } else {
+      // Filter data using our utility function
+      const searchableFields: (keyof UiItemAssignment)[] = [
+        'itemId',
+        'itemName',
+        'customerGroup',
+        'assignedDate',
+        'lastModifiedBy',
+      ];
+      const filtered = searchAcrossColumns(searchTerm, data, searchableFields);
+      setFilteredData(filtered);
+    }
+  }, [searchTerm, data]); // Re-run when search term or data changes
+
   const handleSearch = (value: string) => {
-    setSearchText(value);
-    const filtered = mockData.filter(
-      item =>
-        item.itemName.toLowerCase().includes(value.toLowerCase()) ||
-        item.itemId.toLowerCase().includes(value.toLowerCase()) ||
-        item.customerGroup.toLowerCase().includes(value.toLowerCase()),
-    );
-    setFilteredData(filtered);
+    console.log('Search button clicked with value:', value);
+    setSearchTerm(value);
   };
 
-  // Handle edit action
-  const handleEdit = (record: ItemAssignment) => {
-    console.log('Edit:', record);
-    // TODO: Open edit modal/form
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Search input changed:', e.target.value);
+    setSearchTerm(e.target.value);
   };
 
-  // Handle delete action
-  const handleDelete = (record: ItemAssignment) => {
+  // --- ACTIONS ---
+  const handleEdit = (record: UiItemAssignment) => console.log('Edit:', record);
+  const handleDelete = (record: UiItemAssignment) =>
     console.log('Delete:', record);
-    // TODO: Show confirmation dialog
+
+  const handleColumnSearch = (
+    selectedKeys: string[],
+    confirm: () => void,
+    dataIndex: string,
+  ) => {
+    confirm();
+    setColumnSearchText(prev => ({
+      ...prev,
+      [dataIndex]: selectedKeys[0] || '',
+    }));
+    setColumnSearchedColumn(dataIndex);
   };
 
-  // Table columns definition (similar to Blazor MudTable columns)
-  const columns: ColumnsType<ItemAssignment> = [
+  const handleColumnReset = (
+    clearFilters: (() => void) | undefined,
+    dataIndex: string,
+  ) => {
+    if (clearFilters) {
+      clearFilters();
+    }
+    setColumnSearchText(prev => ({
+      ...prev,
+      [dataIndex]: '',
+    }));
+    setColumnSearchedColumn('');
+  };
+
+  // Create the reusable column search props function
+  const getColumnSearchProps = (dataIndex: keyof UiItemAssignment) =>
+    createColumnSearchProps(
+      dataIndex,
+      searchInput,
+      handleColumnSearch,
+      handleColumnReset,
+    );
+
+  // --- COLUMNS ---
+  // Update your columns in ItemAssignmentManager.tsx
+  const columns: ColumnsType<UiItemAssignment> = [
     {
       title: 'ITEM ID',
       dataIndex: 'itemId',
-      key: 'itemId',
-      width: 100,
-      sorter: (a, b) => a.itemId.localeCompare(b.itemId),
+      sorter: (a, b) => (a.itemId || '').localeCompare(b.itemId || ''),
+      sortDirections: ['ascend', 'descend'],
+      ...getColumnSearchProps('itemId'),
     },
     {
       title: 'ITEM NAME',
       dataIndex: 'itemName',
-      key: 'itemName',
-      sorter: (a, b) => a.itemName.localeCompare(b.itemName),
+      sorter: (a, b) => (a.itemName || '').localeCompare(b.itemName || ''),
+      sortDirections: ['ascend', 'descend'],
+      ...getColumnSearchProps('itemName'),
     },
     {
       title: 'CUSTOMER GROUP',
       dataIndex: 'customerGroup',
-      key: 'customerGroup',
-      render: (customerGroup: string) => {
-        // Color coding based on customer group (like your screenshot)
-        const getTagColor = (group: string) => {
-          if (group.includes('AFICONS')) return 'blue';
-          if (group.includes('RHCUST')) return 'green';
-          if (group.includes('HSENT')) return 'purple';
-          if (group.includes('HSLUC')) return 'orange';
-          if (group.includes('MASSRENT')) return 'red';
-          if (group.includes('ECOMM')) return 'cyan';
-          if (group.includes('INT')) return 'geekblue';
-          return 'default';
-        };
-
-        return <Tag color={getTagColor(customerGroup)}>{customerGroup}</Tag>;
-      },
-      sorter: (a, b) => a.customerGroup.localeCompare(b.customerGroup),
+      render: text => <Tag color="blue">{text}</Tag>,
+      sorter: (a, b) =>
+        (a.customerGroup || '').localeCompare(b.customerGroup || ''),
+      sortDirections: ['ascend', 'descend'],
+      ...getColumnSearchProps('customerGroup'),
     },
     {
       title: 'ASSIGNED DATE',
       dataIndex: 'assignedDate',
-      key: 'assignedDate',
-      width: 180,
-      sorter: (a, b) =>
-        new Date(a.assignedDate).getTime() - new Date(b.assignedDate).getTime(),
+      sorter: (a, b) => {
+        const dateA = a.assignedDate ? new Date(a.assignedDate).getTime() : 0;
+        const dateB = b.assignedDate ? new Date(b.assignedDate).getTime() : 0;
+        return dateA - dateB;
+      },
+      sortDirections: ['ascend', 'descend'],
+      ...getColumnSearchProps('assignedDate'),
     },
     {
       title: 'LAST MODIFIED BY',
       dataIndex: 'lastModifiedBy',
-      key: 'lastModifiedBy',
-      width: 150,
-      sorter: (a, b) => a.lastModifiedBy.localeCompare(b.lastModifiedBy),
+      sorter: (a, b) =>
+        (a.lastModifiedBy || '').localeCompare(b.lastModifiedBy || ''),
+      sortDirections: ['ascend', 'descend'],
+      ...getColumnSearchProps('lastModifiedBy'),
     },
     {
       title: 'ACTIONS',
       key: 'actions',
-      width: 120,
       render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="Edit Assignment">
+        <Space>
+          <Tooltip title="Edit">
             <Button
               type="text"
               icon={<EditOutlined />}
@@ -223,7 +227,7 @@ const ItemAssignmentManager: React.FC = () => {
               style={{ color: '#1890ff' }}
             />
           </Tooltip>
-          <Tooltip title="Delete Assignment">
+          <Tooltip title="Delete">
             <Button
               type="text"
               icon={<DeleteOutlined />}
@@ -238,17 +242,24 @@ const ItemAssignmentManager: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      {/* Header Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <Title level={2} style={{ margin: 0, textAlign: 'left' }}>
-          Item Assignments
-        </Title>
-        <p style={{ color: '#666', margin: 0, textAlign: 'left' }}>
-          Manage customer group assignments for items
-        </p>
-      </div>
+      <Title level={2} style={{ marginBottom: 0 }}>
+        Item Assignments
+      </Title>
+      <p style={{ color: '#666', marginBottom: '24px' }}>
+        Manage customer group assignments for items
+      </p>
 
-      {/* Action Bar */}
+      {error && (
+        <Alert
+          message="Error"
+          description={error}
+          type="error"
+          showIcon
+          closable
+          style={{ marginBottom: '16px' }}
+        />
+      )}
+
       <Card style={{ marginBottom: '16px' }}>
         <div
           style={{
@@ -259,11 +270,12 @@ const ItemAssignmentManager: React.FC = () => {
         >
           <Space>
             <Search
-              placeholder="Search items..."
-              allowClear
+              placeholder="Search across all columns..."
+              onSearch={handleSearch} // When user presses Enter or clicks search icon
+              onChange={handleSearchChange} // When user types (real-time)
+              value={searchTerm} // Controlled input
               style={{ width: 300 }}
-              onSearch={handleSearch}
-              onChange={e => handleSearch(e.target.value)}
+              allowClear // Adds X button to clear
             />
             <Button icon={<FilterOutlined />}>Filter</Button>
           </Space>
@@ -273,24 +285,32 @@ const ItemAssignmentManager: React.FC = () => {
         </div>
       </Card>
 
-      {/* Main Data Table */}
       <Card>
         <Table
           columns={columns}
           dataSource={filteredData}
+          loading={loading}
+          rowKey="key"
+          scroll={{
+            x: 1000, // Horizontal scroll for wide tables
+            y: 500, // Fixed height with vertical scroll
+          }}
           pagination={{
-            total: filteredData.length,
-            pageSize: 10,
+            pageSize: pageSize,
             showSizeChanger: true,
             showQuickJumper: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            onShowSizeChange: (current, size) => {
+              console.log('Page size changed to:', size);
+              setPageSize(size);
+            },
             showTotal: (total, range) =>
-              `Showing ${range[0]} of ${total} assignments`,
+              `${range[0]}-${range[1]} of ${total} items`,
+            position: ['bottomRight'], // Move pagination to bottom center
           }}
-          scroll={{ x: 1000 }}
-          size="middle"
-        />
+          size="small" // Makes rows more compact
+        />{' '}
       </Card>
-
       {/* Recent Activity Logs Section */}
       <Card title="Recent Activity Logs" style={{ marginTop: '16px' }}>
         <div>
@@ -414,6 +434,4 @@ const ItemAssignmentManager: React.FC = () => {
       </Card>
     </div>
   );
-};
-
-export default ItemAssignmentManager;
+}
