@@ -4,6 +4,7 @@ import {
   CloudServerOutlined,
   CodeOutlined,
   DatabaseOutlined,
+  SecurityScanOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
 import { Helmet } from '@modern-js/runtime/head';
@@ -78,7 +79,7 @@ export default function HomePage() {
                   <Text strong>Modern.js Framework</Text>
                   <br />
                   <Text type="secondary">
-                    Enterprise React framework with SSR support
+                    Enterprise React framework with build optimization
                   </Text>
                 </div>
                 <div>
@@ -149,9 +150,9 @@ export default function HomePage() {
                   <Text type="secondary">Dependency management</Text>
                 </div>
                 <div>
-                  <Text strong>ESLint + Prettier</Text>
+                  <Text strong>Azure MSAL Authentication</Text>
                   <br />
-                  <Text type="secondary">Code quality and formatting</Text>
+                  <Text type="secondary">Enterprise identity platform</Text>
                 </div>
               </Space>
             </Card>
@@ -168,9 +169,9 @@ export default function HomePage() {
             >
               <Space direction="vertical" style={{ width: '100%' }}>
                 <div>
-                  <Text strong>Server-Side Rendering</Text>
+                  <Text strong>Client-Side Rendering</Text>
                   <br />
-                  <Text type="secondary">Improved performance and SEO</Text>
+                  <Text type="secondary">Fast interactive user experience</Text>
                 </div>
                 <div>
                   <Text strong>TypeScript Integration</Text>
