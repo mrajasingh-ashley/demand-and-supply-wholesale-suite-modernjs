@@ -1,4 +1,3 @@
-// File: src/services/authService.ts
 import { LogLevel, PublicClientApplication } from '@azure/msal-browser';
 
 // This is the main MSAL configuration object.

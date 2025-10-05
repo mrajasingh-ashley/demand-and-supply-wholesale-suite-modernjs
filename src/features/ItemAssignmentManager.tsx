@@ -19,8 +19,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { AsyncErrorDisplay } from '../components/AsyncErrorDisplay';
 import { useAsyncError } from '../hooks/useAsyncError';
 import { useTableState } from '../hooks/useTableState';
-import { itemAssignmentService } from '../services';
-import type { UiItemAssignment } from '../services/itemAssignment.service';
+import {
+  type UiItemAssignment,
+  itemAssignmentService,
+  logger,
+} from '../services';
 import {
   createColumnSearchProps,
   searchAcrossColumns,
@@ -94,7 +97,10 @@ export default function ItemAssignmentManager() {
       const allData = await itemAssignmentService.getAllItemAssignments();
       setData(allData);
       setFilteredData(allData);
-      console.log(`Loaded ${allData.length} records`);
+      logger.info(
+        `Successfully loaded ${allData.length} item assignments`,
+        'DataFetch',
+      );
     } catch (err) {
       handleAsyncError(err, 'loading item assignments');
     } finally {

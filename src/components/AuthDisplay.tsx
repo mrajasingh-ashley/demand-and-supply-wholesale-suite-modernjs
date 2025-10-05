@@ -1,5 +1,4 @@
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
-// File: src/components/AuthDisplay.tsx
 import {
   AuthenticatedTemplate,
   UnauthenticatedTemplate,
@@ -7,21 +6,47 @@ import {
 } from '@azure/msal-react';
 import { Avatar, Button, Dropdown, Space } from 'antd';
 import type { MenuProps } from 'antd';
+import { logger } from '../services';
 
 export const AuthDisplay = () => {
   const { instance, accounts } = useMsal();
   const userName = accounts[0]?.name || 'User';
 
   const handleLogin = () => {
-    // This triggers the redirect to the Microsoft login page.
+    logger.info('User initiated login process', 'Authentication');
+
     instance.loginRedirect().catch(e => {
-      console.error(e);
+      logger.error(
+        `Microsoft login redirect failed: ${e.message || 'Unknown error'}`,
+        'Authentication',
+        {
+          errorType: 'LoginRedirectFailure',
+          errorCode: e.errorCode,
+          errorMessage: e.errorMessage,
+          correlationId: e.correlationId,
+          stack: e.stack,
+          currentUrl: window.location.href,
+        },
+      );
     });
   };
 
   const handleLogout = () => {
+    logger.info('User initiated logout process', 'Authentication');
+
     instance.logoutRedirect().catch(e => {
-      console.error(e);
+      logger.error(
+        `Microsoft logout redirect failed: ${e.message || 'Unknown error'}`,
+        'Authentication',
+        {
+          errorType: 'LogoutRedirectFailure',
+          errorCode: e.errorCode,
+          errorMessage: e.errorMessage,
+          correlationId: e.correlationId,
+          stack: e.stack,
+          currentUrl: window.location.href,
+        },
+      );
     });
   };
 

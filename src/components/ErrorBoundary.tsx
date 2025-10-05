@@ -4,9 +4,9 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import { Button, Card, Result, Space, Typography } from 'antd';
-// File: src/components/ErrorBoundary.tsx
 import type React from 'react';
 import { Component, type ReactNode } from 'react';
+import { logger } from '../services';
 
 const { Paragraph, Text } = Typography;
 
@@ -42,12 +42,27 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error details
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    logger.error(
+      `React Error Boundary caught an error: ${error.message}`,
+      'ErrorBoundary',
+      {
+        errorType: 'ReactComponentError',
+        errorName: error.name,
+        errorMessage: error.message,
+        errorStack: error.stack,
+        componentStack: errorInfo.componentStack,
+        errorBoundary: this.constructor.name,
+        props: this.props, // Be careful with sensitive data
+        state: this.state,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        currentUrl: window.location.href,
+      },
+    );
 
     this.setState({
       error,
-      errorInfo: errorInfo.componentStack, // This can be undefined
+      errorInfo: errorInfo.componentStack,
     });
   }
 

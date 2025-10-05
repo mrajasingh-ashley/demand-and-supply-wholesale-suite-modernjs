@@ -1,4 +1,5 @@
 // Main data model (like your C# entity/model classes)
+//This is a placeholder file for ItemAssignment related types and interfaces. You can expand it as needed.
 export interface ItemAssignment {
   id: string;
   itemNumber: string;
