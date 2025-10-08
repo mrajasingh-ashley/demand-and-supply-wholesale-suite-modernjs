@@ -15,3 +15,18 @@
 .ant-pagination {
   margin-top: 16px !important; /* Add consistent spacing */
 }
+
+/* Active menu item styling */
+.ant-menu-dark .ant-menu-item-selected {
+  background-color: #ff6b35 !important;
+  color: #fff !important;
+}
+
+.ant-menu-dark .ant-menu-item-selected::after {
+  border-right-color: #ff6b35 !important;
+}
+
+/* Hover state */
+.ant-menu-dark .ant-menu-item:hover {
+  background-color: #ff8a5b !important;
+}

@@ -218,13 +218,10 @@ export default function ItemAssignmentManager() {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Title level={2} style={{ marginBottom: 0 }}>
-        Item Assignments
+    <div style={{ padding: '0px' }}>
+      <Title level={4} style={{ marginBottom: '10px' }}>
+        Item-Customer Group Assignment
       </Title>
-      <p style={{ color: '#666', marginBottom: '24px' }}>
-        Manage customer group assignments for items
-      </p>
 
       {/* Error display */}
       {error && (
